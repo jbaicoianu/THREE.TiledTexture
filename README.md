@@ -1,5 +1,5 @@
 # THREE.TiledTexture
-A tiled texture loader proposal for Three.js
+### A tiled texture loader proposal for Three.js
 
 One of the biggest challenges to WebGL and (more specifically) WebVR projects right now is the efficient loading of textures to the GPU.  Uploading a 4096x4096 or larger texture to the gpu can block for a second or more, causing uncomfortable frame drops while new content streams in over the network and is uploaded to the GPU.  On mobile the situation is even more constrained, and we often need to downscale our images to fit within their more limited constraints, as well.
 
