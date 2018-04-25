@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl - updatable texture</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        background-color: #000000;
+        margin: 0px;
+        overflow: hidden;
+      }
+
+      a {
+        color:#0078ff;
+      }
+
+      #info {
+        position: absolute;
+        top: 10px; width: 100%;
+        color: #ffffff;
+        padding: 5px;
+        font-family: Monospace;
+        font-size: 13px;
+        text-align: center;
+        z-index:100;
+      }
+
+      a {
+        color: orange;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: #0080ff;
+      }
+
+      body .rs-base {
+        position: absolute;
+        top: auto;
+        bottom: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="info">
+      <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - updatable texture WebGL demo
+      <div>
+        <label>Imagesize:</label>
+        <select id="imagesize" onchange="update()">
+          <option value="" selected>-- select imagesize --</option>
+          <option value="textures/dotamap1_25.jpg">16384 x 16384</option>
+          <option value="textures/andromeda.jpg">8192 x 8192</option>
+          <option value="textures/world-very-small.jpg">8192 x 4096</option>
+          <option value="textures/dirt4k.jpg">4096 x 4096</option>
+        </select>
+        <label>Tilesize:</label>
+        <select id="tilesize" onchange="update()">
+          <option value="" selected>-- select tilesize --</option>
+          <option>4096</option>
+          <option>2048</option>
+          <option>1024</option>
+          <option>512</option>
+          <option>256</option>
+          <option>128</option>
+          <option>64</option>
+        </select>
+        <button onclick="update()">update</button>
+      </div>
+    </div>
+
+    <script src="js/rStats.js"></script>
+    <script src="../build/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+
+    <script src="js/FramebufferTextureGenerator.js"></script>
+
+    <script>
+
+      var mouseX = 0, mouseY = 0,
+
+      windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2,
+
+      camera, scene, renderer, controls, cube, plane, plane2, texture, loader;
+
+      init();
+      animate();
+
+      var rS;
+      var select_imagesize = document.getElementById('imagesize'),
+          select_tilesize = document.getElementById('tilesize');
+
+
+      function init() {
+
+        var container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        camera = new THREE.PerspectiveCamera( 33, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.z = 1024;
+
+        scene = new THREE.Scene();
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        container.appendChild( renderer.domElement );
+
+        loader = new FramebufferTextureLoader();
+        loader.setRenderer( renderer );
+
+        controls = new THREE.OrbitControls( camera, container );
+
+        rS = new rStats();
+
+        //texture.minFilter = texture.magFilter = THREE.NearestFilter;
+        //texture.generateMipmaps = false;
+
+        var width = 512;
+        var height = 512;
+
+        cube = new THREE.Mesh(
+          new THREE.BoxBufferGeometry(1,1,1),
+          new THREE.MeshPhongMaterial({
+            color: 0x00ff00,
+            emissive: 0x003300
+          })
+        );
+        plane = new THREE.Mesh(
+          new THREE.PlaneBufferGeometry( width, height ),
+          new THREE.MeshBasicMaterial({
+            //map: texture.texture,
+            side: THREE.DoubleSide
+          })
+        );
+        plane2 = new THREE.Mesh(
+          new THREE.PlaneBufferGeometry( width, height ),
+          new THREE.MeshBasicMaterial({
+            //map: texture.texture,
+            side: THREE.DoubleSide
+          })
+        );
+        var light = new THREE.PointLight();
+        scene.add( light );
+        scene.add( plane );
+        //scene.add( plane2 );
+        scene.add( camera );
+        camera.add( cube );
+        cube.position.set(0,-4,-20);
+        light.position.set(0,20, 1024);
+        //plane.position.set(-384, 0, 0);
+        //plane2.position.set(384, 0, 0);
+
+        renderer.render( scene, camera );
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+      }
+
+      function updateTexture(filename, tilesize) {
+        if (texture) texture.dispose();
+        loader.tilesize = tilesize;
+        texture = loader.load(filename, function(blah) {
+          console.log('loaded!', blah, texture);
+        });
+
+        plane.material.map = texture.texture;
+        plane.material.needsUpdate = true;
+
+/*
+        texture2 = loader.load(filename, function(blah) {
+          console.log('loaded!', blah, texture);
+        });
+
+        plane2.material.map = texture2.texture;
+        plane2.material.needsUpdate = true;
+*/
+      }
+
+
+      function onWindowResize() {
+
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+
+      function animate(ts) {
+        requestAnimationFrame( animate );
+        render(ts);
+      }
+
+      var lastframe;
+      function render(ts) {
+/*
+        rS( 'frame' ).start();
+        rS( 'rAF' ).tick();
+        rS( 'FPS' ).frame();
+*/
+
+
+
+        if (!lastframe) lastframe = ts;
+        var diff = ts - lastframe;
+        if (diff) {
+          var amount = Math.PI * (diff / 1000);
+          cube.rotation.y += amount;
+          cube.rotation.x += amount * .75;
+        }
+        controls.update();
+
+        renderer.render( scene, camera );
+        lastframe = ts;
+        //rS( 'frame' ).end();
+        //rS().update();
+      }
+
+
+      function update() {
+console.log('update!');
+        var imagesize = select_imagesize.value,
+            tilesize = select_tilesize.value;
+        if (imagesize && tilesize) {
+          updateTexture(imagesize, tilesize);
+        }
+      }
+
+    </script>
+  </body>
+</html>
+
+
